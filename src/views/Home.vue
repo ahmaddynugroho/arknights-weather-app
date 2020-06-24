@@ -1,9 +1,10 @@
 <template>
   <div class="home">
     <p class="text-center text-h2">This is Home page</p>
+    <OperatorResponses />
     <p>country: {{ response.country }}</p>
     <p>region: {{ response.region }}</p>
-    <p>weather: {{ response.weather }}</p>
+    <!-- <p>weather: {{ response.weather }}</p> -->
     <p>lat & lon: {{ response.lat }}, {{ response.lon }}</p>
     <input
       v-model="query"
@@ -16,9 +17,13 @@
 
 <script>
 import axios from 'axios'
+import OperatorResponses from '@/components/OperatorResponses'
 
 export default {
   name: 'Home',
+  components: {
+    OperatorResponses
+  },
   data: () => {
     return {
       query: '',
@@ -42,6 +47,8 @@ export default {
       this.response.lat = '...loading...'
       this.response.lon = '...loading...'
       this.response.weather = '...loading...'
+      this.$store.commit('loading', true)
+      this.$store.dispatch('setWeatherCode', '')
 
       axios
         .get(url)
@@ -63,6 +70,8 @@ export default {
           this.climaCell()
         })
         .catch((err) => console.log('err', err))
+      
+      this.query = ''
     },
     climaCell() {
       axios
@@ -78,11 +87,13 @@ export default {
           }
         )
         .then((response) => {
-          console.log(
-            response.data[response.data.length - 1].weather_code.value
-          )
-          this.response.weather =
-            response.data[response.data.length - 1].weather_code.value
+          // console.log(
+          //   response.data[response.data.length - 1].weather_code.value
+          // )
+          const value = response.data[response.data.length - 1].weather_code.value
+          this.response.weather = value
+          this.$store.commit('loading', false)
+          this.$store.dispatch('setWeatherCode', value)
         })
         .catch((err) => {
           console.log(err)
