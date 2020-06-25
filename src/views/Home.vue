@@ -1,18 +1,22 @@
 <template>
-  <div class="home">
-    <p class="text-center text-h2">This is Home page</p>
-    <OperatorResponses />
-    <p>country: {{ response.country }}</p>
-    <p>region: {{ response.region }}</p>
-    <!-- <p>weather: {{ response.weather }}</p> -->
-    <p>lat & lon: {{ response.lat }}, {{ response.lon }}</p>
-    <input
-      v-model="query"
-      @keypress.enter="positionStack"
-      type="text"
-      placeholder="Region/Country"
-    />
-    <div class="text-h1">hello</div>
+  <div class="home bg-grey-lightest min-h-full">
+    <v-container>
+      <v-row justify="center">
+        <v-col cols="12" sm="8" md="6" lg="4">
+          <v-text-field @keypress.enter="positionStack" v-model="query" label="Type place to get weather info..." solo class="mt-3"></v-text-field>
+          <p class="grey--text text-center text-h5 font-weight-light">{{ this.$store.state.quote }}</p>
+          <v-card class="pb-1" v-if="this.$store.state.weather_code">
+            <OperatorResponses />
+            <p class="text-h3 text-center grey--text text--darken-3 pt-3">
+              {{ this.$store.state.weather_code }}
+            </p>
+            <p class="text-caption text-center grey--text text--darken-3">
+              {{address}}
+            </p>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
   </div>
 </template>
 
@@ -28,13 +32,12 @@ export default {
   data: () => {
     return {
       query: '',
+      address: '',
+      qt: '',
       response: {
-        country: '',
-        region: '',
         lat: '',
         lon: '',
-        weather: '',
-      },
+      }
     }
   },
   methods: {
@@ -43,13 +46,8 @@ export default {
       const query = `&query=${this.query}`
       const url = `http://api.positionstack.com/v1/forward?access_key=${key}${query}`
 
-      this.response.country = '...loading...'
-      this.response.region = '...loading...'
-      this.response.lat = '...loading...'
-      this.response.lon = '...loading...'
-      this.response.weather = '...loading...'
-      this.$store.commit('loading', true)
-      this.$store.dispatch('setWeatherCode', '')
+      this.$store.state.weather_code = '..loading..'
+      this.address = '..loading..'
 
       axios
         .get(url)
@@ -58,20 +56,17 @@ export default {
           // console.log('res', res)
           const attribute = res.data.data[0]
           if (attribute) {
-            this.response.country = attribute.country
-            this.response.region = attribute.region
             this.response.lat = attribute.latitude
             this.response.lon = attribute.longitude
+            this.address = `${attribute.locality}, ${attribute.region}, ${attribute.country}`
           } else {
-            this.response.country = 'Unknown Place'
-            this.response.region = ''
             this.response.lat = ''
             this.response.lon = ''
           }
           this.climaCell()
         })
         .catch((err) => console.log('err', err))
-      
+
       this.query = ''
     },
     climaCell() {
@@ -91,15 +86,18 @@ export default {
           // console.log(
           //   response.data[response.data.length - 1].weather_code.value
           // )
-          const value = response.data[response.data.length - 1].weather_code.value
-          this.response.weather = value
-          this.$store.commit('loading', false)
-          this.$store.dispatch('setWeatherCode', value)
+          const value =
+            response.data[response.data.length - 1].weather_code.value
+          this.$store.state.weather_code = value
         })
         .catch((err) => {
           console.log(err)
         })
     },
   },
+  computed: {
+  },
+  watch: {
+  }
 }
 </script>
